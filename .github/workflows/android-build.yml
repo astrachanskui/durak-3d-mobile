@@ -1,0 +1,47 @@
+name: "Мобильная сборка APK"
+on: [push, workflow_dispatch]
+
+jobs:
+  export-android:
+    name: "Сборка APK в облаке"
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: "Получение исходного кода"
+        uses: actions/checkout@v4
+
+      - name: "Установка .NET SDK"
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+
+      - name: "Установка Java"
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: "Установка Android SDK"
+        uses: android-actions/setup-android@v3
+
+      - name: "Скачивание Godot 4.3 .NET"
+        run: |
+          wget https://github.com
+          unzip Godot_v4.3-stable_mono_linux_headless_x86_64.zip
+          mv Godot_v4.3-stable_mono_linux_headless_x86_64/Godot_v4.3-stable_mono_linux_headless.x86_64 godot
+          
+          mkdir -p ~/.local/share/godot/export_templates/4.3.stable.mono
+          wget https://github.com
+          unzip Godot_v4.3-stable_mono_export_templates.tpz -d /tmp
+          mv /tmp/templates/* ~/.local/share/godot/export_templates/4.3.stable.mono/
+
+      - name: "Сборка готового APK"
+        run: |
+          mkdir -p build/android
+          ./godot --headless --export-release "Android" build/android/durak3d.apk
+
+      - name: "Загрузка готового APK файла"
+        uses: actions/upload-artifact@v4
+        with:
+          name: durak3d-game-apk
+          path: build/android/durak3d.apk
