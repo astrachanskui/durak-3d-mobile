@@ -16,32 +16,33 @@ jobs:
           dotnet-version: '8.0.x'
 
       - name: "Установка Java"
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@v5
         with:
           distribution: 'temurin'
           java-version: '17'
 
       - name: "Установка Android SDK"
-        uses: android-actions/setup-android@v3
+        uses: android-actions/setup-android@v4
 
       - name: "Исправление структуры папок"
         run: |
-          if [ ! -d "src/Durak.Gameplay" ]; then
-            mkdir -p src/Durak.Gameplay
-            mv *.cs src/Durak.Gameplay/ 2>/dev/null || true
-            mv Durak.Gameplay.csproj src/Durak.Gameplay/ 2>/dev/null || true
+          mkdir -p src/Durak.Gameplay
+          find . -maxdepth 1 -name "*.cs" -exec mv {} src/Durak.Gameplay/ \; 2>/dev/null || true
+          if [ -f "Durak.Gameplay.csproj" ]; then
+            mv Durak.Gameplay.csproj src/Durak.Gameplay/
           fi
 
-      - name: "Скачивание Godot 4.7.2 .NET"
+      - name: "Скачивание Godot 4.3 .NET Headless"
         run: |
           wget https://github.com
-          unzip Godot_v4.7.2-stable_mono_linux_headless_x86_64.zip
-          mv Godot_v4.7.2-stable_mono_linux_headless_x86_64/Godot_v4.7.2-stable_mono_linux_headless.x86_64 godot
+          unzip Godot_v4.3-stable_mono_linux_headless_x86_64.zip
+          mv Godot_v4.3-stable_mono_linux_headless_x86_64/Godot_v4.3-stable_mono_linux_headless.x86_64 godot
+          chmod +x godot
           
-          mkdir -p ~/.local/share/godot/export_templates/4.7.2.stable.mono
+          mkdir -p ~/.local/share/godot/export_templates/4.3.stable.mono
           wget https://github.com
-          unzip Godot_v4.7.2-stable_mono_export_templates.tpz -d /tmp
-          mv /tmp/templates/* ~/.local/share/godot/export_templates/4.7.2.stable.mono/
+          unzip Godot_v4.3-stable_mono_export_templates.tpz -d /tmp
+          mv /tmp/templates/* ~/.local/share/godot/export_templates/4.3.stable.mono/
 
       - name: "Сборка готового APK"
         run: |
