@@ -21,23 +21,39 @@ jobs:
           distribution: 'temurin'
           java-version: '17'
 
-      - name: "Исправление структуры папок"
-        run: |
-          mkdir -p src/Durak.Gameplay
-          find . -maxdepth 1 -name "*.cs" -exec mv {} src/Durak.Gameplay/ \; 2>/dev/null || true
-          if [ -f "Durak.Gameplay.csproj" ]; then
-            mv Durak.Gameplay.csproj src/Durak.Gameplay/
-          fi
+      - name: "Установка Android SDK"
+        uses: android-actions/setup-android@v4
 
-      - name: "Автоматическая сборка через GitHub CDN"
-        uses: firebelley/godot-export@v5.3.0
-        with:
-          godot_version: "4.3"
-          is_mono: true
-          export_debug: false
-          relative_project_path: "./"
-        env:
-          EXPORT_PRESET: "Android"
+      - name: "Установка NDK и build-tools"
+        run: |
+          yes | sdkmanager --install "platform-tools" "platforms;android-34" "build-tools;34.0.0" "ndk;23.2.8568313"
+          echo "ANDROID_HOME=$ANDROID_SDK_ROOT" >> $GITHUB_ENV
+          echo "ANDROID_NDK_ROOT=$ANDROID_SDK_ROOT/ndk/23.2.8568313" >> $GITHUB_ENV
+
+      - name: "Скачивание Godot 4.3 .NET"
+        run: |
+          curl -L -o godot.zip https://tuxfamily.org
+          unzip godot.zip
+          mv Godot_v4.3-stable_mono_linux_x86_64/Godot_v4.3-stable_mono_linux.x86_64 godot
+          chmod +x godot
+
+      - name: "Скачивание шаблонов экспорта"
+        run: |
+          mkdir -p ~/.local/share/godot/export_templates/4.3.stable.mono
+          curl -L -o templates.tpz https://tuxfamily.org
+          unzip templates.tpz -d /tmp
+          mv /tmp/templates/* ~/.local/share/godot/export_templates/4.3.stable.mono/
+
+      - name: "Генерация debug keystore для подписи"
+        run: |
+          keytool -keyalg RSA -genkeypair -alias androiddebugkey \
+            -keypass android -keystore debug.keystore -storepass android \
+            -dname "CN=Android Debug,O=Android,C=US" -validity 9999 -deststoretype pkcs12
+
+      - name: "Сборка готового APK"
+        run: |
+          mkdir -p build/android
+          ./godot --headless --path . --export-release "Android" build/android/durak3d.apk
 
       - name: "Загрузка готового APK файла"
         uses: actions/upload-artifact@v4
