@@ -21,11 +21,9 @@ config/icon="res://icon.svg"
 project/assembly_name="Durak.Godot"
 
 [input_devices]
-
-; Включаем эмуляцию мыши из тачей, чтобы все кнопки интерфейса (UI) работали от касания пальца
 pointing/emulate_mouse_from_touch=true
 
 [rendering]
-
 renderer/rendering_method="gl_compatibility"
 renderer/rendering_method.mobile="gl_compatibility"
+textures/vram_compression/import_etc2_astc=true
