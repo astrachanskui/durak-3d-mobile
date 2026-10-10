@@ -30,37 +30,40 @@ jobs:
           echo "ANDROID_HOME=$ANDROID_SDK_ROOT" >> $GITHUB_ENV
           echo "ANDROID_NDK_ROOT=$ANDROID_SDK_ROOT/ndk/23.2.8568313" >> $GITHUB_ENV
 
-      - name: "Настройка путей и Editor Settings для Godot"
+      - name: "Настройка Editor Settings для Godot"
         run: |
+          JAVA_PATH=$(dirname $(dirname $(readlink -f $(which java))))
+          echo "JAVA_HOME=$JAVA_PATH" >> $GITHUB_ENV
           mkdir -p ~/.config/godot
           cat > ~/.config/godot/editor_settings-4.tres << EOF
           [resource]
           export/android/android_sdk_path = "${{ env.ANDROID_SDK_ROOT }}"
-          export/android/java_sdk_path = "${{ env.JAVA_HOME }}"
+          export/android/java_sdk_path = "$JAVA_PATH"
           export/android/debug_keystore = "${{ github.workspace }}/debug.keystore"
           export/android/debug_keystore_user = "androiddebugkey"
           export/android/debug_keystore_pass = "android"
           EOF
 
-      - name: "Скачивание Godot 4.3 .NET из GitHub"
+      - name: "Скачивание Godot 4.3 .NET"
         run: |
-          curl -L -o godot.zip https://github.com
+          curl -L -o godot.zip https://github.com/godotengine/godot/releases/download/4.3-stable/Godot_v4.3-stable_mono_linux_x86_64.zip
           unzip godot.zip
           mv Godot_v4.3-stable_mono_linux_x86_64/Godot_v4.3-stable_mono_linux.x86_64 godot
           chmod +x godot
 
-      - name: "Скачивание шаблонов экспорта из GitHub"
+      - name: "Скачивание шаблонов экспорта"
         run: |
           mkdir -p ~/.local/share/godot/export_templates/4.3.stable.mono
-          curl -L -o templates.tpz https://github.com
+          curl -L -o templates.tpz https://github.com/godotengine/godot/releases/download/4.3-stable/Godot_v4.3-stable_mono_export_templates.tpz
           unzip templates.tpz -d /tmp
           mv /tmp/templates/* ~/.local/share/godot/export_templates/4.3.stable.mono/
 
-      - name: "Генерация debug keystore в корень проекта"
+      - name: "Генерация debug keystore"
         run: |
           keytool -keyalg RSA -genkeypair -alias androiddebugkey \
             -keypass android -keystore debug.keystore -storepass android \
             -dname "CN=Android Debug,O=Android,C=US" -validity 9999 -deststoretype pkcs12
+          ls -la debug.keystore
 
       - name: "Сборка готового APK"
         run: |
