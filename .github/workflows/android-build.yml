@@ -15,14 +15,14 @@ jobs:
         with:
           dotnet-version: '8.0.x'
 
-      - name: "Установка Java"
-        uses: actions/setup-java@v5
+      - name: "Установка Java 17"
+        uses: actions/setup-java@v4
         with:
           distribution: 'temurin'
           java-version: '17'
 
       - name: "Установка Android SDK"
-        uses: android-actions/setup-android@v4
+        uses: android-actions/setup-android@v3
 
       - name: "Установка NDK и build-tools"
         run: |
@@ -30,12 +30,13 @@ jobs:
           echo "ANDROID_HOME=$ANDROID_SDK_ROOT" >> $GITHUB_ENV
           echo "ANDROID_NDK_ROOT=$ANDROID_SDK_ROOT/ndk/23.2.8568313" >> $GITHUB_ENV
 
-      - name: "Настройка Editor Settings для Godot"
+      - name: "Настройка Godot Editor Settings (Java + SDK пути)"
         run: |
           JAVA_PATH=$(dirname $(dirname $(readlink -f $(which java))))
           echo "JAVA_HOME=$JAVA_PATH" >> $GITHUB_ENV
           mkdir -p ~/.config/godot
           cat > ~/.config/godot/editor_settings-4.tres << EOF
+          [gd_resource type="EditorSettings" format=3]
           [resource]
           export/android/android_sdk_path = "${{ env.ANDROID_SDK_ROOT }}"
           export/android/java_sdk_path = "$JAVA_PATH"
@@ -63,7 +64,10 @@ jobs:
           keytool -keyalg RSA -genkeypair -alias androiddebugkey \
             -keypass android -keystore debug.keystore -storepass android \
             -dname "CN=Android Debug,O=Android,C=US" -validity 9999 -deststoretype pkcs12
-          ls -la debug.keystore
+
+      - name: "Pre-heating: импорт ресурсов проекта"
+        run: |
+          ./godot --headless --path . --import
 
       - name: "Сборка готового APK"
         run: |
